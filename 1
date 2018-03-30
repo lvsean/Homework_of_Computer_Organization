@@ -1,0 +1,109 @@
+#第一个程序是实现输入到单词的转换
+#如果输入小写字母，则输出以小写字母为开头的单词。
+#如果输入大写字母，则输出以大写字母为开头的单词。
+#如果输入的是数字，则输出数字对应的单词。
+.data        #把输入分成三类，a~z,A~Z,0~9
+	 #每一类用基地址+偏移量进行输出
+	 #具体存储上每一类分别开了两个大的表，
+	 #一个里面放着字符串，一个里面放着对应字符串的偏移值。
+Str_A_Z:     .asciiz
+            "Alpha ","Bravo ","China ","Delta ","Echo ","Foxtrot ",
+            "Golf ","Hotel ","India ","Juliet ","Kilo ","Lima ",
+            "Mary ","November ","Oscar ","Paper ","Quebec ","Research ",
+            "Sierra ","Tango ","Uniform ","Victor ","Whisky ","X-ray ",
+            "Yankee ","Zulu "
+Len_A_Z:	.word
+            0,7,14,21,28,34,43,49,56,63,71,
+            77,83,89,99,106,113,121,131,
+            139,146,155,163,171,178,186
+Str_a_z:	.asciiz
+            "alpha ","bravo ","china ","delta ","echo ","foxtrot ",
+            "golf ","hotel ","india ","juliet ","kilo ","lima ",
+            "mary ","november ","oscar ","paper ","quebec ","research ",
+            "sierra ","tango ","uniform ","victor ","whisky ","x-ray ",
+            "yankee ","zulu "
+Len_a_z:	.word
+            0,7,14,21,28,34,43,49,56,63,71,
+            77,83,89,99,106,113,121,131,
+            139,146,155,163,171,178,186
+Str_0_9:	.asciiz
+            "zero ", "First ", "Second ", "Third ", "Fourth ",
+            "Fifth ", "Sixth ", "Seventh ","Eighth ","Ninth "
+Len_0_9:	 .word
+            0,6,13,21,28,36,43,50,59,67
+
+.text
+.globl main
+main: 	li $v0 12
+	syscall		#利用syscall调用函数读入。
+	beq $v0,'?',Exit	#如果输入的是问号则退出程序。
+	
+Check_a_z:	addi $t0,$zero,122	#判断是否属于a~z
+	slt $t1,$t0,$v0	#若大于z或者小于a则跳转，下同。
+	bne $t1,$zero,Check_A_Z
+	addi $t0,$zero,97
+	slt $t1,$v0,$t0
+	bne $t1,$zero,Check_A_Z
+	j Print_a_z
+
+Check_A_Z:	addi $t0,$zero,90	#判断是否属于A~Z
+	slt $t1,$t0,$v0
+	bne $t1,$zero,Check_0_9
+	addi $t0,$zero,65
+	slt $t1,$v0,$t0
+	bne $t1,$zero,Check_0_9
+	j Print_A_Z
+	
+Check_0_9:  addi $t0,$zero,57	#判断是否属于0~9
+	slt $t1,$t0,$v0
+	bne $t1,$zero,Print_star
+	addi $t0,$zero,48
+	slt $t1,$v0,$t0
+	bne $t1,$zero,Print_star
+	j Print_0_9
+
+Print_a_z:  subi $t0,$v0,97	#输出a~z，利用字符表+偏移值进行输出。
+	mul $t0,$t0,4
+	la $t1,Len_a_z
+	add $t0,$t0,$t1
+	lw $t0,0($t0)
+	la $t1,Str_a_z
+	add $t0,$t0,$t1
+	add $a0,$zero,$t0
+	li $v0,4
+	syscall
+	j main
+	
+Print_A_Z:  subi $t0,$v0,65	#输出A~Z
+	mul $t0,$t0,4
+	la $t1,Len_A_Z
+	add $t0,$t0,$t1
+	lw $t0,0($t0)
+	la $t1,Str_A_Z
+	add $t0,$t0,$t1
+	add $a0,$zero,$t0
+	li $v0,4
+	syscall
+	j main
+	
+Print_0_9:  subi $t0,$v0,48	#输出0~9
+	mul $t0,$t0,4
+	la $t1,Len_0_9
+	add $t0,$t0,$t1
+	lw $t0,0($t0)
+	la $t1,Str_0_9
+	add $t0,$t0,$t1
+	add $a0,$zero,$t0
+	li $v0,4
+	syscall
+	j main
+
+Print_star: addi $a0,$zero,42	#如果所有判断的地方都没有跳转，说明不是可识别的输入，输出星号
+	li $v0,11
+	syscall
+	j main
+
+Exit:	li $v0 ,10
+	syscall
+		
+	              

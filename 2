@@ -1,0 +1,49 @@
+#这个程序实现对字符串的检索。
+#首先输入一个字符串，之后再输入一个字符
+#接着程序会进行匹配。
+#如果成功，则输出字符所在的位置，如果失败则输出fail。
+.data
+Str_Suc:	.asciiz "\r\nSuccess! Location: "
+Str_Fai:	.asciiz "\r\nFail!\r\n"
+Str_end:    .asciiz "\r\n"
+buf: 	.space 1000
+
+.text
+.globl main
+main:	la $a0 buf		#a0设定读入的缓冲区
+	la $a1 1000		#a1表示最大长度
+	li $v0,8		#读入字符串
+	syscall
+
+Begin:	li $v0,12		#读入需要寻找的字符，如果是？则退出程序
+	syscall
+	beq $v0,'?',Exit
+	la $t0,buf		#t0指向buf开头的地方,t1表示步长
+	addi $t1,$zero,1
+	
+Loop:	lb $t2,0($t0)	#利用循环查找
+	beq $t2,$v0,Success
+	addi $t1,$t1,1	#走到下一个位置
+	slt $t3,$t1,$a1	#判断有无越界
+	beq $t3,$zero,Fail 
+	addi $t0,$t0,1
+	j Loop
+	
+Success:	la $a0,Str_Suc	#成功则输出步数	
+	li $v0,4
+	syscall 
+	add $a0,$t1,$zero
+	li $v0,1
+	syscall
+	la $a0,Str_end		
+	li $v0,4
+	syscall
+	j Begin
+
+Fail:	la $a0,Str_Fai         #没有找到就输出fail
+	li $v0,4
+	syscall 
+	j Begin	
+
+Exit:	li $v0 ,10
+	syscall
